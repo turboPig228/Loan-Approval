@@ -1,0 +1,19 @@
+config:
+  target: 'http://localhost:3000' # Убедись, что твой Node.js сервер запущен на этом порту
+  phases:
+    - duration: 30 # Тест будет длиться 30 секунд
+      arrivalRate: 10 # 10 новых запросов каждую секунду (итого около 300 запросов)
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+
+scenarios:
+  - name: Make loan approval predictions
+    flow:
+      - post:
+          url: '/api/ml-model/send' # Твой правильный эндпоинт
+          json: # Правильные параметры для твоей ML-модели
+            income: 25000
+            employment_status: "Employed"
+            credit_score: 624
+            loan_amount: 1700

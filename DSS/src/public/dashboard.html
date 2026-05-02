@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loan Approval Dashboard</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script defer src="./js/scripts.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode/build/jwt-decode.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <script>
+        // Redirect immediately before any content is displayed
+        (function() {
+            const token = localStorage.getItem("token");
+
+            if (!token) {
+                if (confirm("Session expired! Please log in again.")) {
+                    window.location.href = "login.html";
+                }
+                return;
+            }
+
+            try {
+                const decodedToken = jwt_decode(token);
+                const currentTime = Math.floor(Date.now() / 1000);
+
+                if (decodedToken.exp && decodedToken.exp < currentTime) {
+                    localStorage.removeItem("token");
+                    if (confirm("Session expired! Please log in again.")) {
+                        window.location.href = "login.html";
+                    }
+                    return;
+                }
+
+                // Allow access and set user details
+                $(document).ready(function() {
+                    $("#userinfo").text(decodedToken.username + " - " + decodedToken.firstname + " " + decodedToken.lastname);
+                    $("#username").text(decodedToken.username);
+                });
+
+            } catch (error) {
+                localStorage.removeItem("token");
+                if (confirm("Invalid session! Please log in again.")) {
+                    window.location.href = "login.html";
+                }
+            }
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #FFF1F2 0%, #F9A8D4 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .navbar {
+            background: linear-gradient(to right, #F472B6, #BE185D);
+            box-shadow: 0 4px 12px rgba(244, 114, 182, 0.5);
+        }
+        .sidebar {
+            background: linear-gradient(to bottom, #F472B6, #BE185D);
+        }
+        .main-section {
+            animation: fadeIn 1s ease-in-out;
+            flex: 1;
+        }
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .welcome-card {
+            background: white;
+            border: 2px solid #F9A8D4;
+            box-shadow: 0 10px 20px rgba(244, 114, 182, 0.3), 0 0 10px rgba(244, 114, 182, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        .welcome-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(249, 168, 212, 0.1) 0%, transparent 70%);
+            transform: rotate(45deg);
+        }
+        .nav-link, .logout-btn, .author-btn {
+            transition: all 0.3s ease;
+        }
+        .nav-link:hover, .logout-btn:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+        }
+        .author-btn {
+            background: #F9A8D4;
+            border: 2px solid #BE185D;
+            color: #4B1C46;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            box-shadow: 0 2px 4px rgba(244, 114, 182, 0.3);
+        }
+        .author-btn:hover {
+            background: #F472B6;
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(244, 114, 182, 0.5);
+        }
+        .logout-btn {
+            background: #BE185D;
+        }
+        footer {
+            background: linear-gradient(to right, #F472B6, #BE185D);
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+<!-- Navbar -->
+<nav class="navbar w-full py-4 px-6">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-white">Loan Approval Dashboard</h1>
+        <div class="flex items-center space-x-4">
+            <a href="#" class="text-white hover:underline text-sm" id="userinfo">User Info</a>
+            <a class="author-btn inline-block text-sm font-semibold">Author Info</a>
+            <button class="md:hidden text-white focus:outline-none" id="menu-btn">☰</button>
+        </div>
+    </div>
+</nav>
+
+<!-- Sidebar + Main Content Container -->
+<div class="flex flex-1">
+    <!-- Sidebar -->
+    <aside class="sidebar text-white w-64 space-y-6 py-6 px-4 hidden md:block">
+        <h2 class="text-xl font-semibold">Navigation</h2>
+        <nav>
+            <a href="predictor.html" class="nav-link block py-2 px-4 text-white">Make a Prediction</a>
+            <a href="predictor.html#logs" class="nav-link block py-2 px-4 text-white">View Prediction Logs</a>
+        </nav>
+        <button id="logoutBtn" class="logout-btn w-full text-white py-2 rounded mt-4">Logout</button>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-section flex-1 p-6">
+        <div class="welcome-card w-full bg-white p-6 rounded-lg shadow-md text-center">
+            <h2 class="text-2xl font-bold text-[#4B1C46] mb-4">Welcome, <span id="username"></span>!</h2>
+            <p class="text-[#4B1C46]/70 mb-6">Access real-time loan approval predictions and review your prediction history.</p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4 md:hidden">
+                <a href="predictor.html" class="nav-link bg-gradient-to-r from-[#F472B6] to-[#BE185D] inline-block w-full sm:w-48 py-3 rounded-lg text-white font-semibold">Make a Prediction</a>
+                <a href="predictor.html#logs" class="nav-link bg-gradient-to-r from-[#F472B6] to-[#BE185D] inline-block w-full sm:w-48 py-3 rounded-lg text-white font-semibold">View Prediction Logs</a>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Footer -->
+<footer class="w-full text-white text-center py-4 mt-auto">
+    <p>© 2025 Loan Approval Prediction - Creative Exam Project</p>
+</footer>
+</body>
+</html>

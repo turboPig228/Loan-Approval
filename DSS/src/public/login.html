@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode/build/jwt-decode.min.js"></script>
+    <script src="./js/scripts.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <script>
+        $(function() {
+            const token = localStorage.getItem("token");
+            if (token) {
+                try {
+                    const decoded = jwt_decode(token);
+                    const currentTime = Math.floor(Date.now() / 1000);
+                    if (decoded.exp && decoded.exp < currentTime) {
+                        alert("Session expired! Please log in again.");
+                        localStorage.removeItem("token");
+                        window.location.href = "login.html";
+                        return;
+                    }
+                    const role = decoded.role;
+                    switch(role) {
+                        case 1:
+                            window.location.href = "dashboard.html";
+                            break;
+                        case 2:
+                            window.location.href = "registered-user.html";
+                            break;
+                        case 3:
+                            window.location.href = "moderator.html";
+                            break;
+                        default:
+                            window.location.href = "unauthorized.html";
+                    }
+                } catch (error) {
+                    console.error("Token decoding failed:", error);
+                    alert("Invalid token!");
+                }
+            }
+        });
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #FFF1F2 0%, #F9A8D4 100%);
+            overflow: hidden;
+        }
+        .form-container {
+            animation: fadeIn 1s ease-in-out;
+        }
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .form-card {
+            background: white;
+            border: 2px solid #F9A8D4;
+            box-shadow: 0 10px 20px rgba(244, 114, 182, 0.3), 0 0 10px rgba(244, 114, 182, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        .form-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(249, 168, 212, 0.1) 0%, transparent 70%);
+            transform: rotate(45deg);
+        }
+        .input-field {
+            transition: all 0.3s ease;
+        }
+        .input-field:focus {
+            border-color: #F472B6;
+            box-shadow: 0 0 8px rgba(244, 114, 182, 0.5);
+        }
+        .login-btn {
+            background: linear-gradient(to right, #F472B6, #BE185D);
+            transition: all 0.3s ease;
+        }
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(244, 114, 182, 0.5);
+        }
+        .error-msg {
+            transition: opacity 0.3s ease;
+        }
+    </style>
+</head>
+<body class="h-screen flex items-center justify-center">
+<div class="form-container max-w-md w-full p-8">
+    <div class="form-card relative bg-white p-8 rounded-2xl">
+        <div class="text-center mb-6">
+            <h2 class="text-3xl font-bold text-[#4B1C46]">Welcome Back</h2>
+            <p class="text-sm text-[#4B1C46]/70 mt-2">Officer Friendly and No name</p>
+        </div>
+        <div class="relative">
+            <input id="username" type="text" placeholder="Username" class="input-field w-full p-3 border-2 border-[#F9A8D4] rounded-lg mb-4 bg-[#FFF1F2] text-[#4B1C46] focus:outline-none">
+            <input id="password" type="password" placeholder="Password" class="input-field w-full p-3 border-2 border-[#F9A8D4] rounded-lg mb-6 bg-[#FFF1F2] text-[#4B1C46] focus:outline-none">
+            <button id="loginBtn" class="login-btn w-full py-3 rounded-lg text-white font-semibold">Login</button>
+            <p id="errorMsg" class="error-msg text-[#BE185D] mt-4 text-center hidden"></p>
+        </div>
+        <div class="mt-6 text-center">
+            <p class="text-sm text-[#4B1C46]/70">Don't have an account? <a href="#" class="text-[#F472B6] hover:underline">Sign up</a></p>
+        </div>
+    </div>
+</div>
+</body>
+</html>

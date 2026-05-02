@@ -1,0 +1,18 @@
+### Register user
+POST http://localhost:3000/register
+Content-Type: application/json
+
+{
+  "username": "admin0",
+  "password": "0",
+  "firstname": "Officer",
+  "lastname": "Friendly",
+  "role": 1
+}
+
+
+### Authorization by token
+GET http://localhost:3000/api/customers
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTgsInVzZXJuYW1lIjoiYWRtaW4xIiwiZmlyc3RuYW1lIjoiSmFuZSIsImxhc3RuYW1lIjoiTGVlIiwicm9sZSI6MSwiaWF0IjoxNzQyMTI0MDI3LCJleHAiOjE3NDIxMjc2Mjd9.wIVtwO-DND5U0V5dFpQaO5N7LBqioqNWx-LAtr0LHVc
+
+

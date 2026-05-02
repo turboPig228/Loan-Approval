@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script defer src="./js/scripts.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode/build/jwt-decode.min.js"></script>
+    <script>
+        // Redirect immediately before any content is displayed
+        (function() {
+            const token = localStorage.getItem("token"); // Retrieve token
+
+            if (!token) {
+                if (confirm("Session expired! Please log in again.")) {
+                    window.location.href = "login.html";
+                }
+                return;
+            }
+
+            try {
+                const decodedToken = jwt_decode(token); // Decode token
+                const currentTime = Math.floor(Date.now() / 1000); // Current timestamp
+
+                // Check if token is expired
+                if (decodedToken.exp && decodedToken.exp < currentTime) {
+                    localStorage.removeItem("token"); // Remove expired token
+                    if (confirm("Session expired! Please log in again.")) {
+                        window.location.href = "login.html";
+                    }
+                    return;
+                }
+
+                // Check if user role is not admin (role = 1)
+                if (decodedToken.role !== 2) {
+                    if (confirm("Unauthorized access! Redirecting to login.")) {
+                        window.location.href = "login.html";
+                    }
+                    return;
+                }
+
+                // Allow access and set user details
+                $(document).ready(function() {
+                    $("#userinfo").text(decodedToken.username + " - " + decodedToken.firstname + " " + decodedToken.lastname);
+                    $("#username").text(decodedToken.username);
+                });
+
+            } catch (error) {
+                localStorage.removeItem("token"); // Remove invalid token
+                if (confirm("Invalid session! Please log in again.")) {
+                    window.location.href = "login.html";
+                }
+            }
+        })();
+
+    </script>
+</head>
+<body class="bg-gray-100 flex flex-col min-h-screen"> <!--
+        Flex container with column direction, minimum height of the viewport,
+        and light gray background
+    -->
+
+
+<!-- Navbar -->
+<nav class="bg-blue-600 text-white p-4 shadow-md"> <!--
+        Sets the background color to blue (Tailwind's blue-600 shade),
+        text color to white, adds padding of 1rem (4 * 0.25rem),
+        and applies a medium-sized shadow
+    -->
+    <div class="max-w-7xl mx-auto flex justify-between items-center"> <!--
+            Sets a maximum width of 80rem, centers the content horizontally,
+            enables flexbox layout, distributes space evenly between items,
+            and vertically aligns items to the center
+        -->
+        <h1 class="text-xl font-bold">DSS User Dashboard</h1> <!-- Sets font size to extra large (1.25rem) and font weight to bold -->
+        <ul class="hidden md:flex space-x-4"> <!--
+                Hides the list by default, displays as flex on medium screens and larger,
+                and adds horizontal space of 1rem (4 * 0.25rem) between items
+            -->
+            <li><a href="#" class="hover:underline">Home</a></li> <!-- Applies underline on hover -->
+            <li><a href="#" class="hover:underline">About</a></li> <!-- Applies underline on hover -->
+            <li><a href="#" class="hover:underline">Contact</a></li> <!-- Applies underline on hover -->
+        </ul>
+        <a href="#"
+           class="hover:text-lg transition-all duration-300 ease-in-out
+              hover:text-blue-500 hover:bg-gray-200 px-1 rounded-md block"
+           id="userinfo">
+            User Info
+        </a>
+        <button class="md:hidden text-white focus:outline-none" id="menu-btn">☰</button> <!--
+                Hides the button on medium screens and larger, sets text color to white,
+                and removes default focus outline
+            -->
+    </div>
+</nav>
+
+<!-- Sidebar + Main Content Container -->
+<div class="flex flex-1 "> <!-- Enables flexbox layout and spreads height to all screen -->
+    <!--  <div class="flex h-screen "> &lt;!&ndash; Enables flexbox layout and sets height to remaining 100% of screen height &ndash;&gt;-->
+
+    <!-- Sidebar -->
+    <!--<aside class="bg-gray-800 text-white w-64 space-y-6 py-6 px-4 hidden md:block"> &lt;!&ndash;
+              Sets background color to dark gray (Tailwind's gray-800 shade),
+              text color to white, width to 16rem, vertical space of 1.5rem (6 * 0.25rem),
+              vertical padding of 1.5rem, horizontal padding of 1rem,
+              hides by default, and displays as block on medium screens and larger
+          &ndash;&gt;
+      <h2 class="text-xl font-semibold">Menu</h2> &lt;!&ndash; Sets font size to extra large (1.25rem) and font weight to semi-bold &ndash;&gt;
+      <nav>
+        <a href="#" class="block py-2 px-4 hover:bg-gray-700 hover:bold">Dashboard</a> &lt;!&ndash;
+                      Sets display to block, vertical padding of 0.5rem, horizontal padding of 1rem,
+                      changes background color to a lighter gray on hover, and applies bold font on hover
+                  &ndash;&gt;
+        <a href="#" class="block py-2 px-4 hover:bg-gray-700">Products</a> &lt;!&ndash;
+                      Sets display to block, vertical padding of 0.5rem, horizontal padding of 1rem,
+                      changes background color to a lighter gray on hover
+                  &ndash;&gt;
+        <a href="#" class="block py-2 px-4 hover:bg-gray-700">Users</a> &lt;!&ndash;
+                      Sets display to block, vertical padding of 0.5rem, horizontal padding of 1rem,
+                      changes background color to a lighter gray on hover
+                  &ndash;&gt;
+        <a href="#" class="block py-2 px-4 hover:bg-gray-700">Settings</a> &lt;!&ndash;
+                      Sets display to block, vertical padding of 0.5rem, horizontal padding of 1rem,
+                      changes background color to a lighter gray on hover
+                  &ndash;&gt;
+      </nav>
+    </aside>-->
+
+    <!-- Main Content -->
+    <main class="flex-1 flex-row p-6 "> <!-- Allows main content to grow and take up remaining space, adds padding of 1.5rem -->
+        <div class="w-1/3 bg-white p-6 rounded-lg shadow-md text-center mb-10">
+            <h2 class="text-xl font-bold mb-4">Welcome, <span id="username"></span>!</h2>
+            <p class="text-gray-600">This is your dashboard.</p>
+            <button id="logoutBtn" class="w-full mt-4 bg-red-500 text-white py-2 rounded">Logout</button>
+        </div>
+
+        <div class="w-1/3 bg-white p-6 rounded-lg shadow-md text-center">
+            <p class="text-gray-600">Testing RBAC</p>
+            <a href="#" id="customerListBtn" class="block underline py-2 px-4 hover:bg-gray-600">Customer List</a>
+        </div>
+    </main>
+</div>
+
+<!-- Footer -->
+<footer class="bg-gray-900 text-white text-center py-4 mt-auto"> <!--
+        Sets background color to very dark gray (Tailwind's gray-900 shade),
+        text color to white, centers text horizontally, adds vertical padding of 1rem,
+        and sets margin top to auto
+    -->
+    <p>© 2025 DSS Dashboard. All rights reserved.</p>
+</footer>
+
+</body>
+
+</html>

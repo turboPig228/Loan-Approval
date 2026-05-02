@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loan Approval Prediction</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
+  <script defer src="./js/scripts.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #FFF1F2 0%, #F9A8D4 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .container {
+      animation: fadeIn 1s ease-in-out;
+      flex: 1;
+    }
+    @keyframes fadeIn {
+      0% { opacity: 0; transform: translateY(20px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .card {
+      background: white;
+      border: 2px solid #F9A8D4;
+      box-shadow: 0 10px 20px rgba(244, 114, 182, 0.3), 0 0 10px rgba(244, 114, 182, 0.2);
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(249, 168, 212, 0.1) 0%, transparent 70%);
+      transform: rotate(45deg);
+      pointer-events: none;
+    }
+    .input-field {
+      border: 1px solid #F9A8D4;
+      border-radius: 0.375rem;
+      padding: 0.75rem;
+      transition: all 0.2s ease;
+    }
+    .input-field:focus {
+      outline: none;
+      ring: 2px;
+      ring-color: #F472B6;
+      border-color: #F472B6;
+    }
+    .submit-btn, .back-btn, .toggle-btn, .view-btn {
+      background: linear-gradient(to right, #F472B6, #BE185D);
+      transition: all 0.3s ease;
+    }
+    .submit-btn:hover, .back-btn:hover, .toggle-btn:hover, .view-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(244, 114, 182, 0.5);
+    }
+    footer {
+      background: linear-gradient(to right, #F472B6, #BE185D);
+    }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen">
+<div class="container max-w-6xl w-full mx-auto p-6">
+  <div class="card rounded-lg p-8 mb-8">
+    <div class="flex flex-col">
+      <h2 class="text-2xl font-semibold text-[#4B1C46] mb-6 text-center">Loan Approval Inputs</h2>
+      <div class="flex flex-col space-y-4 mb-8">
+        <input type="number" id="income" placeholder="Annual Income ($)" required class="input-field">
+        <select id="employment_status" required class="input-field">
+          <option value="" disabled selected>Select Employment Status</option>
+          <option value="Employed">Employed</option>
+          <option value="Unemployed">Unemployed</option>
+          <option value="Self-Employed">Self-Employed</option>
+        </select>
+        <input type="number" id="credit_score" placeholder="Credit Score (300-850)" required min="300" max="850" class="input-field">
+        <input type="number" id="loan_amount" placeholder="Loan Amount ($)" required min="0" class="input-field">
+        <button id="make-prediction-btn" class="submit-btn text-white py-3 rounded-md font-medium">Make Prediction</button>
+      </div>
+      <h3 class="text-xl font-medium text-[#4B1C46] mb-4 text-center">
+        Prediction Result:
+        <span id="model-result" class="text-[#4B1C46]/70">Waiting for prediction...</span>
+      </h3>
+    </div>
+  </div>
+  <div class="flex flex-col sm:flex-row justify-center gap-4 mb-8">
+    <button id="toggle-charts-btn" class="toggle-btn text-white py-3 px-6 rounded-md font-medium">Show Charts</button>
+    <button id="view-prediction-btn" class="view-btn text-white py-3 px-6 rounded-md font-medium">View Prediction</button>
+  </div>
+  <div id="charts-section" class="hidden">
+    <div class="card rounded-lg p-8 mb-8">
+      <h2 class="text-xl font-bold text-[#4B1C46] mb-4 text-center">Approval Status Bar Chart</h2>
+      <div id="chart"></div>
+    </div>
+    <div class="card rounded-lg p-8 mb-8">
+      <h2 class="text-xl font-bold text-[#4B1C46] mb-4 text-center">Credit Score vs. Loan Amount Scatter Chart</h2>
+      <div id="scatter-chart"></div>
+    </div>
+  </div>
+  <div id="logs-section" class="hidden">
+    <div id="logs" class="card rounded-lg p-8">
+      <h2 class="text-xl font-bold text-[#4B1C46] mb-4 text-center">Prediction Logs</h2>
+      <table class="w-full border-collapse border border-[#F9A8D4]">
+        <thead>
+        <tr class="bg-[#F9A8D4]/20">
+          <th class="border border-[#F9A8D4] px-4 py-2 text-[#4B1C46]">Income ($)</th>
+          <th class="border border-[#F9A8D4] px-4 py-2 text-[#4B1C46]">Employment Status</th>
+          <th class="border border-[#F9A8D4] px-4 py-2 text-[#4B1C46]">Credit Score</th>
+          <th class="border border-[#F9A8D4] px-4 py-2 text-[#4B1C46]">Loan Amount ($)</th>
+          <th class="border border-[#F9A8D4] px-4 py-2 text-[#4B1C46]">Approved</th>
+          <th class="border border-[#F9A8D4] px-4 py-2 text-[#4B1C46]">Timestamp</th>
+        </tr>
+        </thead>
+        <tbody id="predictionLogsBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<footer class="w-full text-white text-center py-4 mt-auto">
+  <div class="max-w-6xl mx-auto flex justify-between items-center px-6">
+    <a href="dashboard.html" class="back-btn text-white py-2 px-4 rounded-md font-medium">Back to Dashboard</a>
+    <p>© 2025 Loan Approval Prediction - Creative Exam Project</p>
+  </div>
+</footer>
+<script>
+  $(function () {
+    let socket;
+    if (typeof io !== 'undefined') {
+      socket = io('http://localhost:3000', { transports: ['websocket'] });
+      $("#model-result").hide();
+      socket.on('connect', () => console.log('Socket.IO connected successfully'));
+      socket.on('connect_error', (error) => {
+        console.error('Socket.IO connection error:', error);
+        alert('Failed to connect to the server. Please ensure the server is running.');
+      });
+    } else {
+      console.error('Socket.IO is not defined.');
+      alert('Socket.IO library failed to load. Check the console.');
+    }
+
+    let barChart = null, scatterChart = null;
+
+    function updateBarChart() {
+      $.ajax({
+        url: 'http://localhost:3000/api/logs-pred?type=loan',
+        type: 'GET',
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        success: (data) => {
+          const categories = data.map(item => item.approved ? 'Approved' : 'Denied');
+          const values = data.map(item => Number(item.counts_f));
+          const colors = data.map(item => item.approved ? '#10B981' : '#EF4444');
+          const barOptions = {
+            series: [{ data: values }],
+            chart: { height: 350, type: 'bar', background: '#FFFFFF' },
+            colors: colors,
+            plotOptions: { bar: { columnWidth: '50%', distributed: true } },
+            dataLabels: {
+              enabled: true,
+              textAnchor: 'middle',
+              style: { colors: ['#4B1C46'] },
+              formatter: (val) => val
+            },
+            legend: { show: false },
+            xaxis: {
+              categories: categories,
+              labels: { style: { colors: '#4B1C46', fontSize: '14px' } },
+              title: { text: 'Approval Status', style: { color: '#4B1C46', fontSize: '16px' } }
+            },
+            yaxis: {
+              title: { text: 'Count', style: { color: '#4B1C46', fontSize: '16px' } },
+              labels: { style: { colors: '#4B1C46' } }
+            },
+            grid: { show: true, borderColor: '#F9A8D4' }
+          };
+          if (!barChart) barChart = new ApexCharts(document.querySelector("#chart"), barOptions).render();
+          else barChart.updateOptions({ xaxis: { categories }, colors: colors }).updateSeries([{ data: values }]);
+        },
+        error: (xhr) => {
+          console.error('Error fetching bar chart data:', xhr.responseText);
+          alert("Error fetching data for bar chart.");
+        }
+      });
+    }
+
+    function updateScatterChart() {
+      $.ajax({
+        url: 'http://localhost:3000/api/logs-pred_scatter?type=loan',
+        type: 'GET',
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        success: (data) => {
+          const approvedData = data.filter(item => item.approved).map(item => [Number(item.credit_score), Number(item.loan_amount)]);
+          const deniedData = data.filter(item => !item.approved).map(item => [Number(item.credit_score), Number(item.loan_amount)]);
+          const scatterOptions = {
+            series: [
+              { name: "Approved", data: approvedData },
+              { name: "Denied", data: deniedData }
+            ],
+            chart: { height: 350, type: 'scatter', zoom: { enabled: true, type: 'xy' }, background: '#FFFFFF' },
+            colors: ['#10B981', '#EF4444'],
+            dataLabels: { enabled: false },
+            markers: { size: 8, opacity: 0.7 },
+            legend: {
+              show: true,
+              position: 'top',
+              horizontalAlign: 'center',
+              labels: { colors: '#4B1C46' }
+            },
+            xaxis: {
+              min: 300, max: 850, tickAmount: 11,
+              labels: { formatter: val => parseInt(val), style: { colors: '#4B1C46' } },
+              title: { text: 'Credit Score', style: { color: '#4B1C46', fontSize: '16px' } }
+            },
+            yaxis: {
+              min: 0, tickAmount: 10,
+              labels: { formatter: val => parseInt(val), style: { colors: '#4B1C46' } },
+              title: { text: 'Loan Amount ($)', style: { color: '#4B1C46', fontSize: '16px' } }
+            },
+            grid: { show: true, borderColor: '#F9A8D4' }
+          };
+          if (!scatterChart) scatterChart = new ApexCharts(document.querySelector("#scatter-chart"), scatterOptions).render();
+          else scatterChart.updateSeries([{ name: "Approved", data: approvedData }, { name: "Denied", data: deniedData }]);
+        },
+        error: (xhr) => {
+          console.error('Error fetching scatter chart data:', xhr.responseText);
+          alert("Error fetching data for scatter chart.");
+        }
+      });
+    }
+
+    function updateLogsTable() {
+      $.ajax({
+        url: "http://localhost:3000/api/predictions",
+        method: "GET",
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        success: (data) => {
+          const logsTableBody = $("#predictionLogsBody");
+          logsTableBody.empty();
+          data.forEach(log => {
+            logsTableBody.append(`
+                                <tr>
+                                    <td class="border border-[#F9A8D4] px-4 py-2 text-[#4B1C46]">${log.income}</td>
+                                    <td class="border border-[#F9A8D4] px-4 py-2 text-[#4B1C46]">${log.employment_status}</td>
+                                    <td class="border border-[#F9A8D4] px-4 py-2 text-[#4B1C46]">${log.credit_score}</td>
+                                    <td class="border border-[#F9A8D4] px-4 py-2 text-[#4B1C46]">${log.loan_amount}</td>
+                                    <td class="border border-[#F9A8D4] px-4 py-2 text-[#4B1C46]">${log.approved ? 'Yes' : 'No'}</td>
+                                    <td class="border border-[#F9A8D4] px-4 py-2 text-[#4B1C46]">${log.timestamp || 'N/A'}</td>
+                                </tr>
+                            `);
+          });
+        },
+        error: (xhr) => {
+          console.error('Error fetching prediction logs:', xhr.responseText);
+          if (xhr.status === 401 || xhr.status === 403) {
+            alert("Unauthorized or invalid token! Please log in again.");
+            localStorage.removeItem("token");
+            window.location.href = "login.html";
+          } else {
+            alert("Failed to fetch prediction logs. Please try again.");
+          }
+        }
+      });
+    }
+
+    $("#toggle-charts-btn").on("click", () => {
+      console.log("Toggle Charts button clicked");
+      const chartsSection = $("#charts-section");
+      if (chartsSection.hasClass("hidden")) {
+        chartsSection.removeClass("hidden");
+        $(this).text("Hide Charts");
+        updateBarChart();
+        updateScatterChart();
+      } else {
+        chartsSection.addClass("hidden");
+        $(this).text("Show Charts");
+      }
+    });
+
+    $("#view-prediction-btn").on("click", () => {
+      console.log("View Prediction button clicked");
+      const logsSection = $("#logs-section");
+      if (logsSection.hasClass("hidden")) {
+        logsSection.removeClass("hidden");
+        $(this).text("Hide Prediction");
+        updateLogsTable();
+      } else {
+        logsSection.addClass("hidden");
+        $(this).text("View Prediction");
+      }
+    });
+
+    $("#make-prediction-btn").on("click", () => {
+      console.log("Make Prediction button clicked");
+      const income = parseFloat($("#income").val().trim());
+      const employment_status = $("#employment_status").val();
+      const credit_score = parseFloat($("#credit_score").val().trim());
+      const loan_amount = parseFloat($("#loan_amount").val().trim());
+
+      if (!income || !employment_status || !credit_score || !loan_amount) {
+        alert("Please fill in all fields.");
+        return;
+      }
+      if (credit_score < 300 || credit_score > 850) {
+        alert("Credit Score must be between 300 and 850.");
+        return;
+      }
+      if (income < 0 || loan_amount < 0) {
+        alert("Income and Loan Amount must be positive numbers.");
+        return;
+      }
+
+      console.log('Submitting prediction:', { income, employment_status, credit_score, loan_amount });
+      $.post({
+        url: "/api/ml-model/send",
+        contentType: "application/json",
+        data: JSON.stringify({ income, employment_status, credit_score, loan_amount }),
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        success: (response) => {
+          console.log("Data sent successfully:", response);
+          $("#income").val(""); $("#employment_status").val(""); $("#credit_score").val(""); $("#loan_amount").val("");
+          $("#model-result").text("Waiting for prediction...").show();
+        },
+        error: (xhr) => {
+          console.error("Error submitting prediction:", xhr.responseText);
+          alert("Error submitting prediction. Please try again.");
+        }
+      });
+    });
+
+    if (socket) {
+      socket.on('model-result', (data) => {
+        console.log("Received model output:", data);
+        if (typeof data.approved === 'undefined') {
+          console.error("Invalid prediction format: 'approved' field missing");
+          $("#model-result").html("<strong>Error: Invalid prediction format</strong>");
+          return;
+        }
+        $("#model-result").fadeIn().html(`<strong>${data.approved ? 'Yes' : 'No'}</strong>`);
+
+        // Auto-update charts if visible
+        if (!$("#charts-section").hasClass("hidden")) {
+          updateBarChart();
+          updateScatterChart();
+        }
+
+        // Auto-update logs table if visible
+        if (!$("#logs-section").hasClass("hidden")) {
+          updateLogsTable();
+        }
+      });
+    }
+  });
+</script>
+</body>
+</html>
