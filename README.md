@@ -32,12 +32,4 @@
 4. **Python ML Producer** отправляет результат (Yes/No) в топики `dss-ml-model-output` и `dss-ml-model-output-logs`.
 5. **Node.js Consumer** получает результат, сохраняет логи в PostgreSQL и мгновенно отправляет ответ клиенту через WebSocket.
 
-## 🚀 Запуск проекта (Getting Started)
 
-### 1. Запуск Apache Kafka (без Zookeeper / KRaft)
-```bash
-# Форматирование хранилища (выполняется один раз)
-kafka-storage.bat format -t <ВАШ_UUID> -c .\config\server.properties
-
-# Запуск сервера
-kafka-server-start.bat .\config\server.properties
